@@ -1,4 +1,4 @@
-name := "TestSparkJava11"
+name := "ModeladoDatos"
 
 version := "0.1"
 

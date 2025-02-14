@@ -3,7 +3,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.Column
 
 
-object project_2 {
+object project_etl {
   def main (args: Array[String]) : Unit ={
     val spark = SparkSession.builder()
       .appName("Project")
@@ -73,6 +73,49 @@ object project_2 {
     hashtagsDF.show(20)
 
     dateFormattedDF.select("Likes","Retweets").describe().show()
+    // Calcular percentiles 95 para Likes y Retweets
+
+    val percentiles = dateFormattedDF.select(
+      expr("percentile_approx(Likes, 0,95)").alias("likes_95"),
+      expr("percentile_approx(Retweets, 0,95)").alias("retweets_95")
+    ).collect()(0)
+
+    val likes95 = percentiles.getAs[Double]("likes_95")
+    val retweets95 = percentiles.getAs[Double]("retweets_95")
+
+    val outliersPercentileDF = dateFormattedDF.filter(col("Likes") > likes95 || col("Retweets") > retweets95)
+    outliersPercentileDF.show(10)
+    val outliersCount = outliersPercentileDF.count()
+    println(s"Cantidad de outliers detectados: $outliersCount")
+
+    //  Método de Desviación Estándar (Outliers por Z-Score)
+
+    val stats = dateFormattedDF.select(
+      mean("Likes").alias("mean_likes"),
+      stddev("Likes").alias("stddev_likes"),
+      mean("Retweets").alias("mean_retweets"),
+      stddev("Retweets").alias("stddev_retweets")
+    ).collect()(0)
+
+
+    val meanLikes = stats.getAs[Double]("mean_likes")
+    val stddevLikes = stats.getAs[Double]("stddev_likes")
+    val meanRetweets = stats.getAs[Double]("mean_retweets")
+    val stddevRetweets = stats.getAs[Double]("stddev_retweets")
+    val zScoreDF =dateFormattedDF.withColumn("Z_Likes", (col("Likes") - meanLikes) / stddevLikes)
+      .withColumn("Z_Retweets", (col("Retweets") - meanRetweets) / stddevRetweets)
+
+    // Filtrar outliers con |Z| > 2
+    val outliersZScoreDF = zScoreDF.filter(abs(col("Z_Likes")) > 2 || abs(col("Z_Retweets")) > 2)
+
+    //  Mostrar resultados
+    println("📊 Datos con Z-Score calculado:")
+    zScoreDF.show()
+
+    println("🚨 Outliers detectados:")
+    outliersZScoreDF.show()
+
+
 
 
     // Procesamiento Batch con Parquet
