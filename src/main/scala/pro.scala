@@ -27,6 +27,10 @@ object project_etl {
 
 
     val dateFormattedDF = socialMediaDF.withColumn("date",to_date(col("timestamp")))
+      .withColumn("Sentiment",trim(lower(col("Sentiment"))))
+
+    println("dateformated")
+    dateFormattedDF.show()
 
 
     // Distribución de Sentimientos
@@ -115,11 +119,53 @@ object project_etl {
     println("🚨 Outliers detectados:")
     outliersZScoreDF.show()
 
+    val sentimentByDateDF = dateFormattedDF
+      .groupBy("Date", "Sentiment")
+      .count()
+      .orderBy("Date")
 
+   sentimentByDateDF.show(10)
 
+    val eventDate = "2023-02-14"
 
-    // Procesamiento Batch con Parquet
-    """
+    val sentimentOnEventDF = sentimentByDateDF
+      .filter(col("Date") === eventDate)
+      .orderBy("Sentiment")
+
+    // sentimentOnEventDF.show()
+
+    val sentimentCountDF = dateFormattedDF
+      .groupBy("Year","Month","Sentiment")
+      .agg(count("*").as("Count"))
+
+    val sentimentAvgDF = sentimentCountDF
+      .groupBy("Year","Month","Sentiment")
+      .agg(avg("count").as("AverageCount"))
+      .orderBy("Year","Month")
+    sentimentAvgDF.show()
+
+    // Análisis Geográfico
+
+    val sentimentByCountryDF = dateFormattedDF
+      .groupBy("Country","Sentiment")
+      .count()
+      .orderBy(col("Country"),desc("count"))
+
+    sentimentByCountryDF.show(5)
+
+    // Relación entre Popularidad y Sentimiento
+
+    val popularSentimentDF = dateFormattedDF
+      .groupBy("Sentiment")
+      .agg(
+        avg("Likes").alias("avg_likes"),
+        avg("Retweets").alias("avg_retweets")
+      )
+      .orderBy(desc("avg_likes"))
+    popularSentimentDF.show()
+
+    // Optimización del Pipeline
+
     dateFormattedDF
       .coalesce(4)
       .write
@@ -127,7 +173,7 @@ object project_etl {
       .option("compression","snappy")
       .parquet("dataSentiment/social_media_parquet")
 
-    """
+
     spark.stop()
   }
 }

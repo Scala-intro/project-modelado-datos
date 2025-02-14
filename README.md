@@ -2,6 +2,9 @@
 
 1. [Análisis Exploratorio Avanzado (EDA) ](#schema1)
 2. [Detección de Outliers en la Interacción de Publicaciones](#schema2)
+3. [Análisis Geográfico (Países con Más Sentimientos Negativos o Positivos)](#schema3)
+4. [Relación entre Popularidad y Sentimiento](#schema4)
+5. [Optimización del Pipeline](#schema5)
 
 
 
@@ -9,7 +12,7 @@
 
 <a name="schema1"></a>
 
-# 1.Análisis Exploratorio Avanzado (EDA) 
+# 1.Análisis Exploratorio Avanzado (EDA)
 
 En esta sección, aplicarás todos los conocimientos adquiridos para construir un pipeline de datos de principio a fin, optimizando el rendimiento y asegurando buenas prácticas en la manipulación de datos.
 
@@ -62,3 +65,39 @@ Esto ayuda a detectar posibles virales o bots.
   - Calcula media y desviación estándar de Likes y Retweets.
   - Filtra posts que superan 3 desviaciones estándar (μ + 3σ).
   - Ejemplo: Si la media de Likes es 500 y la desviación estándar es 1000, un post con más de 3500 Likes será un outlier.
+
+
+
+
+<hr>
+
+<a name="schema3"></a>
+
+# 3. Análisis Geográfico (Países con Más Sentimientos Negativos o Positivos)
+Si el dataset incluye el país de origen de cada post, puedes hacer un ranking de países según el sentimiento predominante
+- Agrupar los datos por País y Sentimiento: Esto te dará el número de tweets por cada combinación de país y sentimiento.
+- Contar la cantidad de tweets por país y sentimiento.
+- Ordenar los países por el sentimiento predominante: Aquí podemos ordenar los países para ver cuáles tienen más tweets con un sentimiento positivo o negativo.
+
+
+<hr>
+
+<a name="schema4"></a>
+
+# 4. Relación entre Popularidad y Sentimiento
+Podemos analizar si las publicaciones más populares (con más likes/retweets) tienen una tendencia emocional específica.
+- Agrupar los datos por sentimiento: Primero agrupamos por el sentimiento para analizar si existe alguna correlación entre el tipo de sentimiento (positivo, negativo, neutral, etc.) y la popularidad de las publicaciones.
+- Calcular el promedio de likes y retweets: Calculamos el promedio de los Likes y Retweets para cada sentimiento. Esto nos ayudará a determinar si existe una tendencia de mayor interacción en ciertos tipos de publicaciones.
+- Comparar los resultados: Finalmente, podemos comparar los resultados para responder a las preguntas planteadas.
+
+<hr>
+
+<a name="schema5"></a>
+
+
+# 5. Optimización del Pipeline
+
+Si el dataset es grande, optimizar el código es clave:
+1. Usar cache() para reutilizar DataFrames: Si realizas varias operaciones sobre un DataFrame, es recomendable usar cache() para almacenarlo en memoria y evitar la recomputación.
+2. Particionar los datos con repartition() o coalesce(): Repartir los datos en particiones más pequeñas o más grandes puede mejorar el rendimiento, especialmente cuando los datos se procesan en paralelo.
+3. Escribir en formato Parquet con compresión Snappy: Parquet es un formato columnar altamente optimizado para almacenar y procesar grandes volúmenes de datos, y Snappy es un algoritmo de compresión rápido que ayuda a reducir el tamaño de almacenamiento sin perder rendimiento en las lecturas/escrituras. en Parquet con compresión Snappy para reducir tamaño de almacenamiento.
